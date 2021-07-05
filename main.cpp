@@ -72,7 +72,7 @@ std::list<std::string> parserOfString(const std::string &srcString)
 
 std::vector<Pair> parserOfPair(const std::list<std::string> &listOfPair)
 {
-    std::vector<Pair> result;
+    std::vector<Pair> result(listOfPair.size());
 
     for(auto pair : listOfPair)
     {

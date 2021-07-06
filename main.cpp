@@ -13,8 +13,7 @@ static const char ESCAPE_CH = '\\';
 static const char DELIMITER_STRING_CH = '/';
 static const char DELIMITER_PAIR_CH = '=';
 
-std::list<std::string> parserOfString(const std::string &srcString);
-std::vector<Pair> parserOfPair(const std::list<std::string> &listOfPair);
+std::vector<Pair> parserOfPairs(const std::string &srcString);
 
 int main(int argc, char **argv)
 {
@@ -24,21 +23,22 @@ int main(int argc, char **argv)
         return -1;
     }
 
-    auto listOfStringsPairs = parserOfString(std::string(argv[1]) + '/');
-    auto vectorOfPairs = parserOfPair(listOfStringsPairs);
+    auto listOfStringsPairs = parserOfPairs(std::string(argv[1]) + '/');
 
-    for(auto it : vectorOfPairs)
+    for(auto it : listOfStringsPairs)
     {
-        std::cout << it.key << "  " << it.value << std::endl;
+        std::cout  << it.key << "  " << it.value << std::endl;
     }
     return 0;
 }
 
-std::list<std::string> parserOfString(const std::string &srcString)
+std::vector<Pair> parserOfPairs(const std::string &srcString)
 {
-    std::list<std::string> result;
+    std::list<Pair> listOfPairs;
     std::string currentString = "";
     bool isEscapeCh = false;
+
+    std::string key, value;
 
     for(auto currentChar : srcString)
     {
@@ -51,39 +51,41 @@ std::list<std::string> parserOfString(const std::string &srcString)
             }
             else if(currentChar == DELIMITER_STRING_CH)
             {
+                if(!currentString.empty() && !key.empty())
+                {
+                    value = currentString;
+                    Pair tmpPair = {key, value};
+
+                    listOfPairs.push_back(tmpPair);
+                    currentString = "";
+                    continue;
+                }
+                else
+                {
+                   throw std::invalid_argument("Not correct pair in source string1");
+                }
+            }
+            else if(currentChar == DELIMITER_PAIR_CH)
+            {
                 if(!currentString.empty())
                 {
-                    result.push_back(currentString);
+                    key = currentString;
                     currentString = "";
+                    continue;
                 }
-                continue;
+                else
+                {
+                    throw std::invalid_argument("Not correct pair in source string2");
+                }
             }
         }
 
-        if(!(currentChar == ESCAPE_CH || currentChar == DELIMITER_STRING_CH) && isEscapeCh) //ошибка экранирования
+        if(!(currentChar == ESCAPE_CH || currentChar == DELIMITER_STRING_CH || currentChar == DELIMITER_PAIR_CH) && isEscapeCh) //ошибка экранирования
             throw std::invalid_argument("Not correct escape character");
 
         currentString += currentChar;
         isEscapeCh = false;
     }
 
-    return result;
-}
-
-std::vector<Pair> parserOfPair(const std::list<std::string> &listOfPair)
-{
-    std::vector<Pair> result(listOfPair.size());
-
-    for(auto pair : listOfPair)
-    {
-        if(std::count(pair.begin(), pair.end(), '=') > 1)
-            throw std::invalid_argument("Not correct pair in source string");
-
-        Pair tmpPair = { pair.substr(0, pair.find(DELIMITER_PAIR_CH)),
-                    pair.substr(pair.find(DELIMITER_PAIR_CH) + 1, pair.size() - 1)};
-
-        result.push_back(tmpPair);
-    }
-
-    return result;
+    return std::vector<Pair> (listOfPairs.begin(), listOfPairs.end());
 }
